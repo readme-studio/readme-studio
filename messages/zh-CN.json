@@ -1,0 +1,39 @@
+{
+  "home": {
+    "hero": {
+      "title": "Readme Studio",
+      "subtitle": "三分钟生成专业个人主页，支持 AI 项目总结",
+      "cta": "开始创建"
+    },
+    "templates": {
+      "title": "选择模板",
+      "use": "使用"
+    }
+  },
+  "editor": {
+    "title": "填写信息",
+    "form": {
+      "name": "姓名",
+      "tagline": "标签",
+      "bio": "简介",
+      "github": "GitHub",
+      "twitter": "Twitter",
+      "blog": "博客"
+    },
+    "repos": {
+      "title": "项目展示",
+      "pull": "从 GitHub 拉取",
+      "stars": "Star"
+    },
+    "ai": {
+      "summarize": "AI 总结选中项目",
+      "quota": "剩余额度"
+    }
+  },
+  "result": {
+    "title": "生成结果",
+    "copy": "复制 Markdown",
+    "push": "一键推送到 GitHub",
+    "view": "查看主页"
+  }
+}
