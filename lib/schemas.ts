@@ -5,7 +5,21 @@ import { z } from "zod";
 // 这样「校验失败」时 error.message 是 key，前端再映射到 zh-CN 文案。
 
 export const previewThemeSchema = z.enum(["light", "dark", "auto"]);
-export const templateIdSchema = z.enum(["minimal", "terminal", "dashboard"]);
+export const templateIdSchema = z.enum([
+  "minimal",
+  "terminal",
+  "dashboard",
+  "neon",
+  "paper",
+  "bento",
+  "galaxy",
+  "terminalGreen",
+  "glassmorphic",
+  "magazine",
+  "aqua",
+  "ember",
+  "snake",
+]);
 
 // 社交链接：允许为空串或 undefined，非空必须是合法 URL / 邮箱
 export const socialSchema = z.object({

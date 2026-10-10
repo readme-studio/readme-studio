@@ -29,7 +29,20 @@ export interface ProfileConfig {
 
   // 外观
   previewTheme: "light" | "dark" | "auto";
-  templateId: "minimal" | "terminal" | "dashboard";
+  templateId:
+    | "minimal"
+    | "terminal"
+    | "dashboard"
+    | "neon"
+    | "paper"
+    | "bento"
+    | "galaxy"
+    | "terminalGreen"
+    | "glassmorphic"
+    | "magazine"
+    | "aqua"
+    | "ember"
+    | "snake";
 }
 
 export interface FeaturedRepo {

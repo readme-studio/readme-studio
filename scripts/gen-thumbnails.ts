@@ -115,10 +115,16 @@ async function main() {
 
       const page = await browser.newPage();
       await page.setViewport({ width: 800, height: 600, deviceScaleFactor: 1 });
-      // 拦截第三方统计图片，避免外网阻塞与破图
+      // 拦截第三方图片，避免外网阻塞与破图（胶囊横幅/打字 SVG/统计卡/贪吃蛇）
       await page.setRequestInterception(true);
       page.on("request", (req) => {
-        if (req.url().includes("github-readme-stats.vercel.app")) {
+        const blocked = [
+          "github-readme-stats.vercel.app",
+          "capsule-render.vercel.app",
+          "readme-typing-svg.demolab.com",
+          "raw.githubusercontent.com",
+        ];
+        if (blocked.some((h) => req.url().includes(h))) {
           req.abort();
         } else {
           req.continue();
