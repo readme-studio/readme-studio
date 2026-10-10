@@ -62,8 +62,8 @@ body {
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: #0969da;
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -97,8 +97,8 @@ body {
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: #2f81f7;
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -133,5 +133,41 @@ body {
   }
   html {
     @apply font-sans;
+  }
+  .md-preview {
+    @apply text-sm leading-relaxed;
+  }
+  .md-preview h1 {
+    @apply mb-2 mt-4 text-2xl font-bold;
+  }
+  .md-preview h2 {
+    @apply mb-2 mt-4 text-xl font-semibold;
+  }
+  .md-preview h3 {
+    @apply mb-1 mt-3 text-lg font-semibold;
+  }
+  .md-preview p {
+    @apply my-2;
+  }
+  .md-preview ul {
+    @apply my-2 list-disc pl-6;
+  }
+  .md-preview ol {
+    @apply my-2 list-decimal pl-6;
+  }
+  .md-preview li {
+    @apply my-1;
+  }
+  .md-preview a {
+    @apply text-primary underline;
+  }
+  .md-preview code {
+    @apply rounded bg-muted px-1 py-0.5 font-mono text-xs;
+  }
+  .md-preview blockquote {
+    @apply border-l-4 border-border pl-4 text-muted-foreground;
+  }
+  .md-preview strong {
+    @apply font-semibold;
   }
 }

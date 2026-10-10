@@ -77,9 +77,9 @@ export interface SummarizeRequest {
   }>;
 }
 
-// 推送请求
+// 推送请求。owner 可省略：省略时由服务端用 PAT 解析出当前登录用户名
 export interface PushRequest {
-  owner: string;
+  owner?: string;
   content: string;
   pat: string;
 }
