@@ -1,7 +1,6 @@
 import OpenAI from "openai";
 import type { SummarizeRequest } from "./types";
-
-export const SUMMARY_MODEL = "gpt-4o-mini";
+import type { ModelConfig } from "./model-config";
 
 // 单仓库总结超时（与文档一致：单仓库 >30s 降级）
 const REPO_TIMEOUT_MS = 30_000;
@@ -35,13 +34,13 @@ export interface RepoSummaryEvent {
 // 单个仓库的 LLM 流：逐 token 产出 {repo, delta}；失败产出 {repo, error}
 export async function* summarizeOne(
   repo: RepoInput,
-  apiKey: string,
+  config: ModelConfig,
 ): AsyncGenerator<RepoSummaryEvent> {
-  const openai = new OpenAI({ apiKey });
+  const openai = new OpenAI({ apiKey: config.apiKey, baseURL: config.baseURL });
   try {
     const completion = await openai.chat.completions.create(
       {
-        model: SUMMARY_MODEL,
+        model: config.model,
         stream: true,
         temperature: 0.3,
         messages: [
@@ -57,8 +56,15 @@ export async function* summarizeOne(
     }
   } catch (e) {
     const err = e as Error;
-    const msg =
-      err?.name === "TimeoutError" ? "总结超时（>30s），已跳过" : err?.message || "总结失败";
+    const raw = err?.message || "总结失败";
+    let msg = raw;
+    if (/ECONNREFUSED|ENOTFOUND|Connection error|fetch failed|network/i.test(raw)) {
+      msg =
+        "无法连接模型服务：若使用本地 Ollama，请确认已运行 `ollama run qwen2.5`；" +
+        "若用云端模型，请检查 OPENAI_BASE_URL 与网络。";
+    } else if (err?.name === "TimeoutError") {
+      msg = "总结超时（>30s），已跳过";
+    }
     yield { repo: repo.name, error: msg };
   }
 }
@@ -91,9 +97,9 @@ async function* mergeGenerators(
 // 并发总结多个仓库，产出逐仓库事件流
 export function streamSummaries(
   repos: RepoInput[],
-  apiKey: string,
+  config: ModelConfig,
 ): AsyncGenerator<RepoSummaryEvent> {
-  const generators = repos.map((r) => summarizeOne(r, apiKey));
+  const generators = repos.map((r) => summarizeOne(r, config));
   return mergeGenerators(generators);
 }
 

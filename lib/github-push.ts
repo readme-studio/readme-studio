@@ -114,11 +114,11 @@ export async function pushReadme(req: PushRequest): Promise<PushResponse> {
     const status = (e as { status?: number }).status;
     let error = (e as Error)?.message ?? "推送失败";
     if (status === 401) {
-      error = "PAT 无效或权限不足（需 Contents:write 与 Account Administration:write）";
+      error = "GitHub 授权无效或已过期，请重新登录后重试";
     } else if (status === 403) {
-      error = "PAT 权限不足或被限流";
+      error = "GitHub 权限不足（需 public_repo 以创建并写入公开仓库），请重新登录授权";
     } else if (status === 404 && !req.owner) {
-      error = "无法定位目标仓库，请确认 PAT 对应的账号";
+      error = "无法定位目标仓库，请确认当前 GitHub 账号";
     }
     return { success: false, error };
   }

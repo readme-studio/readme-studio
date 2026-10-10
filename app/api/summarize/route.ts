@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { checkDailySummaryLimit } from "@/lib/rate-limit";
+import { resolveModelConfig } from "@/lib/model-config";
 import {
   streamSummaries,
   summariesToSse,
@@ -71,15 +72,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
+  // 解析可用模型：优先 OPENAI_API_KEY / OPENAI_BASE_URL（任意 OpenAI 兼容免费云），
+  // 否则回退到本地 Ollama（零费用）；两者皆无则给出引导，不消耗额度。
+  const model = resolveModelConfig();
+  if (model.source === "none") {
     return NextResponse.json(
-      { error: "服务未配置 OPENAI_API_KEY", code: "CONFIG_MISSING" },
+      {
+        error:
+          "未配置 AI 模型：可在本地运行 Ollama（ollama pull qwen2.5 后保持运行），" +
+          "或在 .env 中填写 OPENAI_BASE_URL + OPENAI_API_KEY（DeepSeek / 通义 / 智谱等免费兼容服务）。",
+        code: "CONFIG_MISSING",
+      },
       { status: 500 },
     );
   }
 
-  const stream = summariesToSse(streamSummaries(parsed.data.repos, apiKey));
+  const stream = summariesToSse(streamSummaries(parsed.data.repos, model));
 
   return createSseResponse(stream, {
     headers: { "X-RateLimit-Remaining": String(limit.remaining) },

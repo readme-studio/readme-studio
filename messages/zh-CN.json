@@ -116,6 +116,29 @@
     "pushing": "推送中…",
     "pushed": "已推送到 GitHub",
     "empty": "未找到生成数据，请返回编辑器重新生成",
-    "edit": "返回编辑器"
+    "edit": "返回编辑器",
+    "publish": {
+      "title": "发布到 GitHub",
+      "descLoggedIn": "我们将在你的 GitHub 创建专属主页仓库 {repo}，并把这份 README 放进去。完成后访问 {url} 即可看到你的新主页。",
+      "descLoggedOut": "把这份主页发布到你的 GitHub。只需用 GitHub 账号授权一次，无需写代码、也无需手动创建 Token。",
+      "connectAndPublish": "用 GitHub 账号连接并发布",
+      "withAccount": "用 GitHub 账号一键发布",
+      "advanced": "改用 Token 发布",
+      "advancedBack": "返回账号发布",
+      "patLabel": "Personal Access Token",
+      "patDesc": "不想用 GitHub 授权时，可粘贴 Token（需 public_repo 权限，仅用于创建仓库与写入 README）。",
+      "patRequired": "请输入 Token",
+      "publishing": "发布中…",
+      "success": "发布成功！你的主页已上线",
+      "viewProfile": "查看我的主页",
+      "copyLink": "复制主页链接",
+      "done": "完成",
+      "firstTimeHint": "首次使用需授权一次，仅用于创建仓库和写入 README，不会读取你的其他代码。",
+      "repoHint": "仓库名固定为你的用户名，对应 GitHub 个人主页；你随时可在 GitHub 上编辑这份 README。",
+      "errAuth": "GitHub 授权无效或已过期，请重新登录后重试",
+      "errScope": "GitHub 权限不足（需 public_repo），请重新登录并授权",
+      "errRate": "GitHub 接口限流，请稍后再试",
+      "errNetwork": "网络异常，请检查网络后重试"
+    }
   }
 }
