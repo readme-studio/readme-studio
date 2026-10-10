@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -79,8 +80,8 @@ export function RepoSelector({
   if (loading) {
     return (
       <div className="space-y-2">
-        <div className="h-14 animate-pulse rounded-lg border bg-muted" />
-        <div className="h-14 animate-pulse rounded-lg border bg-muted" />
+        <Skeleton className="h-14 w-full rounded-lg" />
+        <Skeleton className="h-14 w-full rounded-lg" />
       </div>
     );
   }
