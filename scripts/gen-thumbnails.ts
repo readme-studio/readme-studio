@@ -21,44 +21,48 @@ import type { ProfileConfig } from "../lib/types";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = resolve(__dirname, "../public/thumbnails");
 
-// 丰富的样例数据，便于展示各模板的差异
+// 样例数据：取自 GitHub 作者 javaeer 的真实公开资料与仓库
+// 注：javaeer 在 GitHub 无公开组织（company 字段 yunlou 并非 GitHub 组织），故示例仅用其个人仓库
 const sampleConfig: ProfileConfig = {
-  name: "张三",
-  tagline: "fullstack.dev",
-  bio: "坐标杭州，专注于 Web 开发与开发者工具。",
-  location: "Hangzhou",
-  company: "Acme",
+  name: "Javaeer",
+  tagline: "fullstack · open-source",
+  bio: "开源开发者，深耕 Java 后端、前端数据可视化与 AI 智能体。",
+  location: "Beijing",
+  company: "yunlou",
   social: {
-    github: "https://github.com/zhangsan",
-    twitter: "@zhangsan",
-    linkedin: "https://www.linkedin.com/in/zhangsan",
-    blog: "https://zhangsan.dev",
-    email: "hi@zhangsan.dev",
+    github: "https://github.com/javaeer",
+    twitter: "",
+    linkedin: "",
+    blog: "https://www.yunlou.net.cn",
+    email: "",
   },
   featuredRepos: [
     {
-      name: "readme-studio",
-      description: "三分钟生成专业 GitHub 个人主页",
-      url: "https://github.com/zhangsan/readme-studio",
-      language: "TypeScript",
-      stars: 1280,
+      name: "fast-url",
+      description:
+        "基于 Spring Boot 的短链接服务，支持短码生成、302 重定向与 Redis 缓存。",
+      url: "https://github.com/javaeer/fast-url",
+      language: "Java",
+      stars: 3,
       useAiSummary: true,
-      aiSummary: "一站式生成精美主页，内置 AI 项目总结。",
+      aiSummary:
+        "开箱即用的短链接服务，内置 Redis 缓存与 302 跳转，适合自建短链平台。",
     },
     {
-      name: "cli-kit",
-      description: "轻量命令行工具集",
-      url: "https://github.com/zhangsan/cli-kit",
-      language: "Go",
-      stars: 342,
+      name: "local-forge",
+      description:
+        "100% 客户端运行的文件工具箱：压缩、解压、格式转换与 ffmpeg 处理。",
+      url: "https://github.com/javaeer/local-forge",
+      language: "Vue",
+      stars: 2,
       useAiSummary: false,
     },
     {
-      name: "ui-lib",
-      description: "可复制的 React 组件库",
-      url: "https://github.com/zhangsan/ui-lib",
-      language: "TypeScript",
-      stars: 89,
+      name: "maps-dashboard",
+      description: "基于地图的数据看板大屏，可视化地理分布与实时指标。",
+      url: "https://github.com/javaeer/maps-dashboard",
+      language: "JavaScript",
+      stars: 2,
       useAiSummary: false,
     },
   ],
@@ -123,6 +127,7 @@ async function main() {
           "capsule-render.vercel.app",
           "readme-typing-svg.demolab.com",
           "raw.githubusercontent.com",
+          "img.shields.io",
         ];
         if (blocked.some((h) => req.url().includes(h))) {
           req.abort();

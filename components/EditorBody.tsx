@@ -25,10 +25,16 @@ import { summarizeWithBYOK, type ByokProvider } from "@/lib/byok";
 import type { RepoInfo, ProfileConfig, FeaturedRepo } from "@/lib/types";
 
 const DEFAULT_CONFIG: ProfileConfig = {
-  name: "张三",
-  tagline: "全栈开发者",
-  bio: "坐标杭州，专注于 Web 开发和开发者工具。",
-  social: {},
+  name: "Javaeer",
+  tagline: "fullstack · open-source",
+  bio: "开源开发者，深耕 Java 后端、前端数据可视化与 AI 智能体。",
+  social: {
+    github: "https://github.com/javaeer",
+    twitter: "",
+    linkedin: "",
+    blog: "https://www.yunlou.net.cn",
+    email: "",
+  },
   featuredRepos: [],
   stats: {
     showStars: true,

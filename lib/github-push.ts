@@ -47,12 +47,18 @@ async function waitForRepoReady(
 
 // 把生成的 README 推送到用户的「个人主页特殊仓库」（owner/owner 的 README.md）
 export async function pushReadme(req: PushRequest): Promise<PushResponse> {
-  const { content, pat } = req;
-  if (!content || !pat) {
-    return { success: false, error: "缺少 content 或 pat 参数" };
+  const { content, pat, accessToken } = req;
+  // PAT 与 OAuth 访问令牌二选一（均为 Bearer，Octokit 通用）
+  const token = pat || accessToken;
+  if (!content || !token) {
+    return {
+      success: false,
+      error: "缺少 content 或授权令牌（请先登录 GitHub 或提供 Token）",
+      code: "AUTH",
+    };
   }
 
-  const octokit = new Octokit({ auth: pat });
+  const octokit = new Octokit({ auth: token });
 
   try {
     // 解析当前 PAT 对应的用户名；未显式传 owner 时使用
@@ -112,14 +118,31 @@ export async function pushReadme(req: PushRequest): Promise<PushResponse> {
     return { success: true, url: `https://github.com/${owner}` };
   } catch (e) {
     const status = (e as { status?: number }).status;
+    const isOAuth = Boolean(accessToken) && !pat;
     let error = (e as Error)?.message ?? "推送失败";
+    let code: PushResponse["code"] = "OTHER";
     if (status === 401) {
-      error = "GitHub 授权无效或已过期，请重新登录后重试";
+      // OAuth 令牌失效 / PAT 无效
+      error = isOAuth
+        ? "GitHub 授权无效或已过期，请重新登录后重试"
+        : "GitHub Token 无效，请检查后重试";
+      code = "AUTH";
     } else if (status === 403) {
-      error = "GitHub 权限不足（需 public_repo 以创建并写入公开仓库），请重新登录授权";
+      // 权限不足：OAuth 需 public_repo；PAT 需 Contents:write
+      error = isOAuth
+        ? "GitHub 权限不足（需 public_repo），请重新登录并授权"
+        : "GitHub Token 权限不足（需 Contents:write）";
+      code = "SCOPE";
     } else if (status === 404 && !req.owner) {
-      error = "无法定位目标仓库，请确认当前 GitHub 账号";
+      error = "无法定位目标仓库，请确认登录账号";
+      code = "AUTH";
+    } else if (status === 429) {
+      error = "GitHub 接口限流，请稍后再试";
+      code = "RATE";
+    } else {
+      error = "网络异常，请检查网络后重试";
+      code = "NETWORK";
     }
-    return { success: false, error };
+    return { success: false, error, code };
   }
 }

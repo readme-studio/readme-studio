@@ -13,20 +13,18 @@ declare module "next-auth" {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  // 非 Vercel 自托管（含 localhost）下建议开启，避免 host 检测类回调问题
-  trustHost: true,
   providers: [
     GitHub({
       clientId: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      // GitHub 已落地 RFC 9207，回调强制携带 iss=https://github.com/login/oauth；
+      // 显式声明 issuer 以通过 openid-client 校验（beta.25 的 GitHub provider 无默认 issuer）。
+      issuer: "https://github.com/login/oauth",
       // v1.1 文档 4.7 修订项：read:user 单独无法列出仓库，必须加 public_repo（均为只读）。
+      // public_repo 同时允许向个人公开仓库（含 username/username 主页仓库）写入 README，供一键发布使用。
       authorization: {
         params: { scope: "read:user public_repo" },
       },
-      // GitHub 自 2026-04 起在回调强制带 iss（RFC 9207），Auth.js 底层 oauth4webapi
-      // 会校验该 iss 与 provider issuer 是否一致；必须显式声明为带 /login/oauth 后缀的地址，
-      // 否则回调抛 unexpected "iss" (issuer) response parameter value。
-      issuer: "https://github.com/login/oauth",
     }),
   ],
   callbacks: {

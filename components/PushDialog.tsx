@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { signIn } from "next-auth/react";
 import { toast } from "sonner";
-import { Loader2, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,194 +16,202 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-// 小白友好的「一键发布到 GitHub」：
-// - 已登录（GitHub OAuth）：直接复用 OAuth token 发布，无需手动创建 PAT；
-// - 未登录：一键引导 GitHub 授权，授权后回来即可发布；
-// - 高级用户：可展开「改用 Token 发布」使用自己的 PAT。
+type ErrCode = "AUTH" | "SCOPE" | "RATE" | "NETWORK" | "OTHER" | undefined;
+
 export function PushDialog({
   markdown,
-  loggedIn,
-  userName,
   onPushed,
 }: {
   markdown: string;
-  loggedIn: boolean;
-  userName?: string;
   onPushed: (url: string) => void;
 }) {
-  const tp = useTranslations("result.publish");
   const t = useTranslations("result");
+  const tp = useTranslations("result.publish");
   const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [showPat, setShowPat] = useState(false);
   const [pat, setPat] = useState("");
-  const [advanced, setAdvanced] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [doneUrl, setDoneUrl] = useState<string | null>(null);
 
-  const login = userName ?? "你的用户名";
-  const repoName = `${login}/${login}`;
-  const profileUrl = `github.com/${login}`;
+  // 打开时探测登录态（服务端会话，不暴露令牌到客户端）
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    fetch("/api/auth/session")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!active) return;
+        const u = d?.user;
+        setLoggedIn(Boolean(u));
+        setUserName(u?.name ?? u?.login ?? null);
+      })
+      .catch(() => active && setLoggedIn(false));
+    return () => {
+      active = false;
+    };
+  }, [open]);
 
-  const reset = () => {
-    setBusy(false);
-    setDoneUrl(null);
-    setAdvanced(false);
-    setPat("");
+  const errMessage = (code?: ErrCode): string => {
+    switch (code) {
+      case "AUTH":
+        return tp("errAuth");
+      case "SCOPE":
+        return tp("errScope");
+      case "RATE":
+        return tp("errRate");
+      default:
+        return tp("errNetwork");
+    }
   };
 
-  const handleConnect = () => {
-    // 未登录：直接发起 GitHub 授权，回来后（loggedIn=true）即可一键发布
-    void signIn("github", { callbackUrl: "/result" });
-  };
-
-  const handlePublish = async () => {
-    const token = advanced ? pat.trim() : "";
-    if (advanced && !token) {
-      toast.error(tp("patRequired"));
-      return;
+  const handlePush = async () => {
+    if (showPat) {
+      if (!pat.trim()) {
+        toast.error(tp("patRequired"));
+        return;
+      }
     }
     setBusy(true);
     try {
       const res = await fetch("/api/github/push", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: markdown, ...(token ? { pat: token } : {}) }),
+        body: JSON.stringify({
+          content: markdown,
+          ...(showPat ? { pat: pat.trim() } : {}),
+        }),
       });
       const data = (await res.json()) as {
         success?: boolean;
         url?: string;
         error?: string;
+        code?: ErrCode;
       };
-      if (!data.success) throw new Error(data.error || "推送失败");
-      toast.success(t("pushed"));
+      if (!data.success) {
+        // 账号模式令牌失效：引导重新登录
+        if (data.code === "AUTH" && !showPat) {
+          toast.error(tp("errAuth"));
+          signIn("github");
+          return;
+        }
+        throw new Error(errMessage(data.code));
+      }
+      toast.success(tp("success"));
       setDoneUrl(data.url ?? "");
       onPushed(data.url ?? "");
     } catch (e) {
-      // 把常见错误翻译成小白能看懂的话
-      const raw = e instanceof Error ? e.message : "推送失败";
-      let msg = raw;
-      if (/401|无效|过期/.test(raw)) msg = tp("errAuth");
-      else if (/403|权限|scope/.test(raw)) msg = tp("errScope");
-      else if (/429|速率|限流/.test(raw)) msg = tp("errRate");
-      else if (/network|fetch|网络/.test(raw)) msg = tp("errNetwork");
-      toast.error(msg);
+      toast.error(e instanceof Error ? e.message : tp("errNetwork"));
     } finally {
       setBusy(false);
     }
   };
 
+  const reset = () => {
+    setDoneUrl(null);
+    setPat("");
+    setShowPat(false);
+  };
+
   return (
     <Dialog
       open={open}
-      onOpenChange={(v) => {
-        setOpen(v);
-        if (!v) reset();
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) reset();
       }}
     >
       <DialogTrigger asChild>
         <Button variant="outline">{t("push")}</Button>
       </DialogTrigger>
-
-      <DialogContent className="max-w-md">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{tp("title")}</DialogTitle>
           <DialogDescription>
             {loggedIn
-              ? tp("descLoggedIn", { repo: repoName, url: profileUrl })
+              ? tp("descLoggedIn", {
+                  repo: userName ?? "你的用户名",
+                  url: `https://github.com/${userName ?? ""}`,
+                })
               : tp("descLoggedOut")}
           </DialogDescription>
         </DialogHeader>
 
-        {!loggedIn ? (
-          // 未登录：引导授权（小白首选路径）
+        {doneUrl ? (
           <div className="space-y-3">
-            <Button className="w-full" onClick={handleConnect}>
-              <Rocket className="mr-2 h-4 w-4" />
-              {tp("connectAndPublish")}
-            </Button>
-            <p className="text-xs text-muted-foreground">{tp("firstTimeHint")}</p>
-          </div>
-        ) : doneUrl ? (
-          // 发布成功：展示链接 + 快捷操作
-          <div className="space-y-3">
-            <p className="rounded-md bg-muted p-3 text-sm">{tp("success")}</p>
-            <p className="break-all text-xs text-muted-foreground">{doneUrl}</p>
-            <div className="flex gap-2">
-              <Button asChild className="flex-1">
+            <p className="text-sm text-muted-foreground">{tp("success")}</p>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild>
                 <a href={doneUrl} target="_blank" rel="noreferrer">
                   {tp("viewProfile")}
                 </a>
               </Button>
               <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => {
-                  void navigator.clipboard.writeText(doneUrl);
-                  toast.success(tp("copyLink"));
-                }}
+                variant="secondary"
+                onClick={() => navigator.clipboard.writeText(doneUrl)}
               >
                 {tp("copyLink")}
               </Button>
-            </div>
-            <DialogFooter>
-              <Button variant="ghost" onClick={() => setOpen(false)}>
+              <Button variant="ghost" onClick={reset}>
                 {tp("done")}
+              </Button>
+            </div>
+          </div>
+        ) : showPat ? (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">{tp("patDesc")}</p>
+            <Input
+              type="password"
+              placeholder="github_pat_..."
+              value={pat}
+              onChange={(e) => setPat(e.target.value)}
+              autoComplete="off"
+            />
+            <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
+              <Button
+                variant="link"
+                className="px-0"
+                onClick={() => setShowPat(false)}
+              >
+                {tp("advancedBack")}
+              </Button>
+              <Button onClick={handlePush} disabled={busy}>
+                {busy ? tp("publishing") : t("push")}
+              </Button>
+            </DialogFooter>
+          </div>
+        ) : loggedIn ? (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">{tp("firstTimeHint")}</p>
+            <p className="text-sm text-muted-foreground">{tp("repoHint")}</p>
+            <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
+              <Button
+                variant="link"
+                className="px-0"
+                onClick={() => setShowPat(true)}
+              >
+                {tp("advanced")}
+              </Button>
+              <Button onClick={handlePush} disabled={busy}>
+                {busy ? tp("publishing") : tp("withAccount")}
               </Button>
             </DialogFooter>
           </div>
         ) : (
-          // 已登录：一键发布（推荐）+ 高级 Token 模式
           <div className="space-y-3">
-            <Button className="w-full" onClick={handlePublish} disabled={busy}>
-              {busy ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {tp("publishing")}
-                </>
-              ) : (
-                <>
-                  <Rocket className="mr-2 h-4 w-4" />
-                  {tp("withAccount")}
-                </>
-              )}
-            </Button>
-
-            {!advanced ? (
-              <button
-                type="button"
-                className="w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
-                onClick={() => setAdvanced(true)}
+            <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
+              <Button
+                variant="link"
+                className="px-0"
+                onClick={() => setShowPat(true)}
               >
                 {tp("advanced")}
-              </button>
-            ) : (
-              <div className="space-y-2">
-                <label className="block text-sm font-medium">{tp("patLabel")}</label>
-                <Input
-                  type="password"
-                  placeholder="github_pat_..."
-                  value={pat}
-                  onChange={(e) => setPat(e.target.value)}
-                  autoComplete="off"
-                />
-                <p className="text-xs text-muted-foreground">{tp("patDesc")}</p>
-                <div className="flex gap-2">
-                  <Button onClick={handlePublish} disabled={busy} className="flex-1">
-                    {busy ? tp("publishing") : t("push")}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      setAdvanced(false);
-                      setPat("");
-                    }}
-                  >
-                    {tp("advancedBack")}
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            <p className="text-xs text-muted-foreground">{tp("repoHint")}</p>
+              </Button>
+              <Button onClick={() => signIn("github")}>
+                {tp("connectAndPublish")}
+              </Button>
+            </DialogFooter>
           </div>
         )}
       </DialogContent>

@@ -19,6 +19,16 @@ export const templateIdSchema = z.enum([
   "aqua",
   "ember",
   "snake",
+  "retro",
+  "blueprint",
+  "ide",
+  "brutalist",
+  "vaporwave",
+  "swiss",
+  "zen",
+  "sticker",
+  "newspaper",
+  "cyberpunk",
 ]);
 
 // 社交链接：允许为空串或 undefined，非空必须是合法 URL / 邮箱

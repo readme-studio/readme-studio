@@ -42,7 +42,17 @@ export interface ProfileConfig {
     | "magazine"
     | "aqua"
     | "ember"
-    | "snake";
+    | "snake"
+    | "retro"
+    | "blueprint"
+    | "ide"
+    | "brutalist"
+    | "vaporwave"
+    | "swiss"
+    | "zen"
+    | "sticker"
+    | "newspaper"
+    | "cyberpunk";
 }
 
 export interface FeaturedRepo {
@@ -98,11 +108,16 @@ export interface SummarizeRequest {
   }>;
 }
 
-// 推送请求。owner 可省略：省略时由服务端用 PAT 解析出当前登录用户名
+// 推送请求。
+// - pat：手动粘贴的 Personal Access Token（Token 兜底模式）
+// - accessToken：GitHub OAuth 登录后的访问令牌（小白一键发布模式，由服务端会话注入）
+// 二选一即可；都缺则视为未授权。
+// owner 可省略：省略时由服务端用令牌解析出当前登录用户名
 export interface PushRequest {
   owner?: string;
   content: string;
-  pat: string;
+  pat?: string;
+  accessToken?: string;
 }
 
 // 推送响应
@@ -110,4 +125,6 @@ export interface PushResponse {
   success: boolean;
   url?: string;
   error?: string;
+  // 结构化错误码，便于前端映射到 i18n 文案（result.publish.err*）
+  code?: "AUTH" | "SCOPE" | "RATE" | "NETWORK" | "OTHER";
 }

@@ -12,6 +12,16 @@ import { magazineTemplate } from "./magazine";
 import { aquaTemplate } from "./aqua";
 import { emberTemplate } from "./ember";
 import { snakeTemplate } from "./snake";
+import { retroTemplate } from "./retro";
+import { blueprintTemplate } from "./blueprint";
+import { ideTemplate } from "./ide";
+import { brutalistTemplate } from "./brutalist";
+import { vaporwaveTemplate } from "./vaporwave";
+import { swissTemplate } from "./swiss";
+import { zenTemplate } from "./zen";
+import { stickerTemplate } from "./sticker";
+import { newspaperTemplate } from "./newspaper";
+import { cyberpunkTemplate } from "./cyberpunk";
 
 export type TemplateId =
   | "minimal"
@@ -26,7 +36,17 @@ export type TemplateId =
   | "magazine"
   | "aqua"
   | "ember"
-  | "snake";
+  | "snake"
+  | "retro"
+  | "blueprint"
+  | "ide"
+  | "brutalist"
+  | "vaporwave"
+  | "swiss"
+  | "zen"
+  | "sticker"
+  | "newspaper"
+  | "cyberpunk";
 
 export {
   minimalTemplate,
@@ -42,6 +62,16 @@ export {
   aquaTemplate,
   emberTemplate,
   snakeTemplate,
+  retroTemplate,
+  blueprintTemplate,
+  ideTemplate,
+  brutalistTemplate,
+  vaporwaveTemplate,
+  swissTemplate,
+  zenTemplate,
+  stickerTemplate,
+  newspaperTemplate,
+  cyberpunkTemplate,
 };
 
 // 模板注册表：id -> Template 实现
@@ -59,6 +89,16 @@ export const templates: Record<TemplateId, Template> = {
   aqua: aquaTemplate,
   ember: emberTemplate,
   snake: snakeTemplate,
+  retro: retroTemplate,
+  blueprint: blueprintTemplate,
+  ide: ideTemplate,
+  brutalist: brutalistTemplate,
+  vaporwave: vaporwaveTemplate,
+  swiss: swissTemplate,
+  zen: zenTemplate,
+  sticker: stickerTemplate,
+  newspaper: newspaperTemplate,
+  cyberpunk: cyberpunkTemplate,
 };
 
 // 按 templateId 取模板，未找到返回 undefined

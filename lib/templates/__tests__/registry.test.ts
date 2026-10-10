@@ -33,10 +33,10 @@ function sample(overrides: Partial<ProfileConfig> = {}): ProfileConfig {
   };
 }
 
-describe("模板注册表（13 个）", () => {
-  it("注册表包含 13 个模板且覆盖全部 TemplateId", () => {
+describe("模板注册表（23 个）", () => {
+  it("注册表包含 23 个模板且覆盖全部 TemplateId", () => {
     const ids = Object.keys(templates) as TemplateId[];
-    expect(ids).toHaveLength(13);
+    expect(ids).toHaveLength(23);
     for (const id of ids) {
       expect(getTemplate(id)).toBeDefined();
     }
