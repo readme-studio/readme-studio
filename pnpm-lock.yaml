@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@hookform/resolvers':
+        specifier: 3.9.1
+        version: 3.9.1(react-hook-form@7.54.2(react@19.3.0))
       '@octokit/rest':
         specifier: 21.1.1
         version: 21.1.1
@@ -368,6 +371,11 @@ packages:
     engines: {node: '>=20'}
     peerDependencies:
       hono: ^4 || ^5.0.0-0
+
+  '@hookform/resolvers@3.9.1':
+    resolution: {integrity: sha512-ud2HqmGBM0P0IABqoskKWI6PEf6ZDDBZkFqe2Vnl+mTHCEHzr3ISjjZyCwTjC/qpL25JC9aIDkloQejvMeq0ug==}
+    peerDependencies:
+      react-hook-form: ^7.0.0
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -4983,6 +4991,10 @@ snapshots:
   '@hono/node-server@2.1.4(hono@4.13.13)':
     dependencies:
       hono: 4.13.13
+
+  '@hookform/resolvers@3.9.1(react-hook-form@7.54.2(react@19.3.0))':
+    dependencies:
+      react-hook-form: 7.54.2(react@19.3.0)
 
   '@humanfs/core@0.19.2':
     dependencies:

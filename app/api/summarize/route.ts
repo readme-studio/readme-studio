@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { auth } from "@/lib/auth";
 import { checkDailySummaryLimit } from "@/lib/rate-limit";
 import {
-  streamSummary,
-  summarizeToSse,
+  streamSummaries,
+  summariesToSse,
   createSseResponse,
 } from "@/lib/summarize";
 
@@ -24,6 +25,10 @@ function clientIp(req: NextRequest): string {
   const fwd = req.headers.get("x-forwarded-for");
   if (fwd) return fwd.split(",")[0].trim();
   return req.headers.get("x-real-ip") ?? "unknown";
+}
+
+function dayKey(): string {
+  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 }
 
 export async function POST(req: NextRequest) {
@@ -49,7 +54,16 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const limit = await checkDailySummaryLimit(`summarize:${clientIp(req)}`);
+  // 限流 key 优先用登录用户 id（文档要求 summarize:{userId}:{date}），
+  // 未登录时回退到 IP，避免 NAT 共享/换 IP 绕过的问题在登录态下发生。
+  const session = await auth();
+  const date = dayKey();
+  const idKey = session?.user?.id;
+  const limitKey = idKey
+    ? `summarize:${idKey}:${date}`
+    : `summarize:ip:${clientIp(req)}:${date}`;
+
+  const limit = await checkDailySummaryLimit(limitKey);
   if (!limit.allowed) {
     return NextResponse.json(
       { error: "今日 AI 总结次数已用完（每日 3 次）", code: "RATE_LIMITED" },
@@ -65,7 +79,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const stream = summarizeToSse(streamSummary(parsed.data.repos, apiKey));
+  const stream = summariesToSse(streamSummaries(parsed.data.repos, apiKey));
 
   return createSseResponse(stream, {
     headers: { "X-RateLimit-Remaining": String(limit.remaining) },
