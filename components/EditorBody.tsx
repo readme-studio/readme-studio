@@ -35,7 +35,7 @@ export function EditorBody({ loggedIn }: { loggedIn: boolean }) {
   const router = useRouter();
   const [config, setConfig] = useState<ProfileConfig>(DEFAULT_CONFIG);
   const [repos, setRepos] = useState<RepoInfo[]>([]);
-  const [selected, setSelected] = useState<RepoInfo | null>(null);
+  const [selected, setSelected] = useState<RepoInfo[]>([]);
   const [loading, setLoading] = useState(loggedIn);
   const [summarizing, setSummarizing] = useState(false);
 
@@ -72,12 +72,14 @@ export function EditorBody({ loggedIn }: { loggedIn: boolean }) {
     };
   }, [loggedIn]);
 
-  // 单选仓库：选中则加入 featuredRepos，再次点击取消
+  // 多选仓库：选中则加入 featuredRepos，再次点击取消
   const handleSelect = (r: RepoInfo) => {
-    const willSelect = selected?.name !== r.name;
-    setSelected(willSelect ? r : null);
+    const isSel = selected.some((x) => x.name === r.name);
+    setSelected((cur) =>
+      isSel ? cur.filter((x) => x.name !== r.name) : [...cur, r],
+    );
     setConfig((c) => {
-      if (!willSelect) {
+      if (isSel) {
         return {
           ...c,
           featuredRepos: c.featuredRepos.filter((f) => f.name !== r.name),
@@ -96,24 +98,31 @@ export function EditorBody({ loggedIn }: { loggedIn: boolean }) {
     });
   };
 
-  // 调用 /api/summarize，用 fetch + ReadableStream 消费 SSE，实时回填 aiSummary
+  // 调用 /api/summarize：并发总结所有选中仓库，逐仓库 SSE 回流，按 repo 名实时回填
   const handleSummarize = async () => {
-    if (!selected || summarizing) return;
-    const repo = selected;
+    if (selected.length === 0 || summarizing) return;
     setSummarizing(true);
+    const names = new Set(selected.map((r) => r.name));
+
+    // 先清空所有选中仓库的 AI 摘要，进入「总结中」状态
+    setConfig((c) => ({
+      ...c,
+      featuredRepos: c.featuredRepos.map((f) =>
+        names.has(f.name) ? { ...f, useAiSummary: true, aiSummary: "" } : f,
+      ),
+    }));
+
     try {
       const res = await fetch("/api/summarize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          repos: [
-            {
-              name: repo.name,
-              description: repo.description ?? "",
-              language: repo.language ?? "",
-              topics: repo.topics,
-            },
-          ],
+          repos: selected.map((r) => ({
+            name: r.name,
+            description: r.description ?? "",
+            language: r.language ?? "",
+            topics: r.topics,
+          })),
         }),
       });
 
@@ -124,14 +133,8 @@ export function EditorBody({ loggedIn }: { loggedIn: boolean }) {
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
+      const acc: Record<string, string> = {};
       let buffer = "";
-      let acc = "";
-      setConfig((c) => ({
-        ...c,
-        featuredRepos: c.featuredRepos.map((f) =>
-          f.name === repo.name ? { ...f, useAiSummary: true, aiSummary: "" } : f,
-        ),
-      }));
 
       while (true) {
         const { done, value } = await reader.read();
@@ -146,35 +149,50 @@ export function EditorBody({ loggedIn }: { loggedIn: boolean }) {
           if (data === "[DONE]") continue;
           try {
             const json = JSON.parse(data) as {
+              repo?: string;
               delta?: string;
               error?: string;
             };
-            if (json.error) throw new Error(json.error);
-            if (json.delta) {
-              acc += json.delta;
+            if (json.error) {
+              toast.error(json.repo ? `${json.repo}：${json.error}` : json.error);
+              if (json.repo) {
+                // 该仓库失败，回退到原始描述
+                setConfig((c) => ({
+                  ...c,
+                  featuredRepos: c.featuredRepos.map((f) =>
+                    f.name === json.repo
+                      ? { ...f, useAiSummary: false, aiSummary: undefined }
+                      : f,
+                  ),
+                }));
+              }
+              continue;
+            }
+            if (json.delta && json.repo) {
+              acc[json.repo] = (acc[json.repo] ?? "") + json.delta;
+              const text = acc[json.repo];
               setConfig((c) => ({
                 ...c,
                 featuredRepos: c.featuredRepos.map((f) =>
-                  f.name === repo.name
-                    ? { ...f, aiSummary: acc, useAiSummary: true }
+                  f.name === json.repo
+                    ? { ...f, aiSummary: text, useAiSummary: true }
                     : f,
                 ),
               }));
             }
-          } catch (e) {
-            if (e instanceof SyntaxError) continue;
-            throw e;
+          } catch {
+            // 忽略不完整的帧
           }
         }
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "AI 总结失败";
       toast.error(msg);
-      // 失败回退到原始描述
+      // 整体失败：回退所有选中仓库到原始描述
       setConfig((c) => ({
         ...c,
         featuredRepos: c.featuredRepos.map((f) =>
-          f.name === repo.name
+          names.has(f.name)
             ? { ...f, useAiSummary: false, aiSummary: undefined }
             : f,
         ),
@@ -201,7 +219,7 @@ export function EditorBody({ loggedIn }: { loggedIn: boolean }) {
           <h3 className="mb-2 font-semibold">{t("repos.title")}</h3>
           <RepoSelector
             repos={repos}
-            selected={selected ? [selected.name] : []}
+            selected={selected.map((r) => r.name)}
             loading={loading}
             onSelect={handleSelect}
           />
@@ -209,7 +227,7 @@ export function EditorBody({ loggedIn }: { loggedIn: boolean }) {
 
         <Button
           onClick={handleSummarize}
-          disabled={!selected || summarizing}
+          disabled={selected.length === 0 || summarizing}
           className="w-full"
         >
           {summarizing ? t("ai.summarizing") : t("ai.summarize")}

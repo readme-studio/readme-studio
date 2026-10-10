@@ -32,6 +32,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     session({ session, token }) {
       session.accessToken = token.accessToken as string | undefined;
+      // 透出 GitHub 用户 id，供 /api/summarize 限流 key 使用
+      if (token.sub) session.user.id = token.sub;
       return session;
     },
   },

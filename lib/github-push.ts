@@ -28,6 +28,23 @@ async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
   throw lastErr;
 }
 
+// 建库后轮询，直到仓库具备默认分支（初始 commit 完成）再继续，避免 404/冲突
+async function waitForRepoReady(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+): Promise<void> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      const r = await octokit.repos.get({ owner, repo });
+      if (r.data.default_branch) return;
+    } catch {
+      // 仓库尚未就绪，继续等待
+    }
+    await new Promise((res) => setTimeout(res, 800 * (attempt + 1)));
+  }
+}
+
 // 把生成的 README 推送到用户的「个人主页特殊仓库」（owner/owner 的 README.md）
 export async function pushReadme(req: PushRequest): Promise<PushResponse> {
   const { content, pat } = req;
@@ -47,15 +64,26 @@ export async function pushReadme(req: PushRequest): Promise<PushResponse> {
     const repo = owner; // 个人主页仓库名必须等同用户名
 
     // 确保仓库存在：不存在则创建（个人主页特殊仓库）
+    let created = false;
     try {
       await octokit.repos.get({ owner, repo });
     } catch (e) {
       const status = (e as { status?: number }).status;
       if (status === 404) {
-        await octokit.repos.createForAuthenticatedUser({ name: repo });
+        // auto_init 生成初始 commit + 默认分支，避免 PUT README 时仓库尚未就绪
+        await octokit.repos.createForAuthenticatedUser({
+          name: repo,
+          auto_init: true,
+        });
+        created = true;
       } else {
         throw e;
       }
+    }
+
+    // 新建仓库后轮询，直到默认分支就绪再写入 README
+    if (created) {
+      await waitForRepoReady(octokit, owner, repo);
     }
 
     // 读取已有 README 的 SHA（用于更新而非新建）
