@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "gen:thumbs": "tsx scripts/gen-thumbnails.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "3.9.1",
@@ -46,8 +47,12 @@
     "eslint-config-next": "15.1.6",
     "eslint-config-prettier": "10.1.8",
     "prettier": "3.9.9",
+    "puppeteer": "^25.13.0",
+    "remark": "^15.0.1",
+    "remark-html": "^16.0.1",
     "shadcn": "4.21.4",
     "tailwindcss": "4.0.6",
+    "tsx": "^4.23.15",
     "typescript": "5.7.3",
     "vitest": "5.0.3"
   },

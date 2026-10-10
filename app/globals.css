@@ -171,3 +171,49 @@ body {
     @apply font-semibold;
   }
 }
+
+/* 编辑器预览主题（3.6）：仅作用于预览容器，不影响全局站点 */
+.preview-theme-light {
+  background: #ffffff;
+  color: #1f2328;
+}
+.preview-theme-light .md-preview a {
+  color: #0969da;
+}
+.preview-theme-light .md-preview code {
+  background: #f0f0f0;
+}
+.preview-theme-light .md-preview blockquote {
+  border-color: #d0d7de;
+  color: #59636e;
+}
+
+.preview-theme-dark {
+  background: #0d1117;
+  color: #e6edf3;
+}
+.preview-theme-dark .md-preview a {
+  color: #2f81f7;
+}
+.preview-theme-dark .md-preview code {
+  background: #161b22;
+}
+.preview-theme-dark .md-preview blockquote {
+  border-color: #30363d;
+  color: #8b949e;
+}
+
+.preview-theme-auto {
+  background: #ffffff;
+  color: #1f2328;
+}
+.preview-theme-auto .md-preview a {
+  color: #0969da;
+}
+.preview-theme-auto .md-preview code {
+  background: #f0f0f0;
+}
+.preview-theme-auto .md-preview blockquote {
+  border-color: #d0d7de;
+  color: #59636e;
+}

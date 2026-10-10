@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,13 +10,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { Template } from "@/lib/types";
+import type { TemplateMeta } from "@/lib/types";
 
 export function TemplateCard({
   template,
   useLabel,
 }: {
-  template: Template;
+  template: TemplateMeta;
   useLabel: string;
 }) {
   return (
@@ -25,6 +27,9 @@ export function TemplateCard({
           src={template.thumbnail}
           alt={template.name}
           className="h-full w-full object-cover"
+          onError={(e) => {
+            e.currentTarget.src = "/thumbnails/placeholder.svg";
+          }}
         />
       </div>
       <CardHeader>

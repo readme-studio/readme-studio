@@ -14,7 +14,10 @@ import { ProfileForm } from "./ProfileForm";
 import { RepoSelector } from "./RepoSelector";
 import { MarkdownPreview } from "./MarkdownPreview";
 import { ByokDialog } from "./ByokDialog";
-import { minimalTemplate, getTemplate } from "@/lib/templates";
+import { TemplateSelector } from "./TemplateSelector";
+import { PreviewThemeSelect, type PreviewTheme } from "./PreviewThemeSelect";
+import { cn } from "@/lib/utils";
+import { minimalTemplate, getTemplate, templates, type TemplateId } from "@/lib/templates";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { saveConfig } from "@/lib/storage";
 import { profileFormSchema, type ProfileFormValues } from "@/lib/schemas";
@@ -102,6 +105,33 @@ export function EditorBody({ loggedIn }: { loggedIn: boolean }) {
     const valid = profileFormSchema.safeParse(debouncedForm).success;
     setDisplayConfig((prev) => (valid ? merged : { ...prev, featuredRepos: featured }));
   }, [debouncedForm, featured]);
+
+  // 进入编辑器时还原模板选择：优先 ?template=，其次 sessionStorage（3.3）
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get("template");
+    const fromStore = sessionStorage.getItem("readme-studio:template");
+    const initial = fromUrl ?? fromStore;
+    if (initial && initial in templates) {
+      form.setValue("templateId", initial as TemplateId);
+    }
+  }, [form]);
+
+  // 切换模板：更新表单 → 预览重渲染，并持久化到 URL 与 sessionStorage（3.3）
+  const handleTemplateChange = (id: TemplateId) => {
+    form.setValue("templateId", id);
+    if (typeof window === "undefined") return;
+    sessionStorage.setItem("readme-studio:template", id);
+    const url = new URL(window.location.href);
+    url.searchParams.set("template", id);
+    window.history.replaceState({}, "", url.toString());
+  };
+
+  // 切换预览主题：仅影响预览容器（3.6）
+  const handlePreviewThemeChange = (v: PreviewTheme) => {
+    form.setValue("previewTheme", v);
+  };
 
   // 拉取当前用户的公开仓库（可重试；401 提示重新登录，网络错误提示重试）
   const loadRepos = useCallback(async () => {
@@ -332,6 +362,12 @@ export function EditorBody({ loggedIn }: { loggedIn: boolean }) {
 
   const template = getTemplate(displayConfig.templateId) ?? minimalTemplate;
   const markdown = template.render(displayConfig);
+  const previewThemeClass =
+    displayConfig.previewTheme === "dark"
+      ? "preview-theme-dark"
+      : displayConfig.previewTheme === "auto"
+        ? "preview-theme-auto"
+        : "preview-theme-light";
 
   return (
     <Form {...form}>
@@ -394,13 +430,22 @@ export function EditorBody({ loggedIn }: { loggedIn: boolean }) {
         </aside>
 
         <section className="flex flex-col p-4">
-          <div className="mb-2 text-sm text-muted-foreground">
-            {t("template")}：极简风
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <TemplateSelector
+              value={displayConfig.templateId}
+              onChange={handleTemplateChange}
+            />
+            <PreviewThemeSelect
+              value={displayConfig.previewTheme}
+              onChange={handlePreviewThemeChange}
+            />
           </div>
-          <div className="rounded-lg border bg-card p-4">
+          <div className={cn("rounded-lg border p-4", previewThemeClass)}>
             <MarkdownPreview markdown={markdown} />
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">{t("previewHint")}</p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {t("previewTheme.hint")}
+          </p>
         </section>
       </div>
 

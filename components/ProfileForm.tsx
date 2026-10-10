@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import type { ProfileFormValues } from "@/lib/schemas";
 
@@ -49,6 +50,28 @@ export function ProfileForm() {
             />
           </FormControl>
           <FormMessage>{teMsg(fieldState.error?.message)}</FormMessage>
+        </FormItem>
+      )}
+    />
+  );
+
+  // 统计卡片开关（仅 dashboard 模板生效，3.5）
+  const statsCheckbox = (
+    name: "stats.showStars" | "stats.showCommits" | "stats.showPRs" | "stats.showLanguages",
+    label: string,
+  ) => (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem className="flex flex-row items-center gap-2 space-y-0">
+          <FormControl>
+            <Checkbox
+              checked={Boolean(field.value)}
+              onCheckedChange={(c) => field.onChange(c === true)}
+            />
+          </FormControl>
+          <FormLabel className="cursor-pointer font-normal">{label}</FormLabel>
         </FormItem>
       )}
     />
@@ -131,6 +154,17 @@ export function ProfileForm() {
       {socialField("social.linkedin", t("linkedin"))}
       {socialField("social.blog", t("blog"))}
       {socialField("social.email", t("email"))}
+
+      <div className="space-y-2 rounded-lg border p-3">
+        <div className="text-sm font-medium">{t("stats.title")}</div>
+        <div className="grid grid-cols-2 gap-2">
+          {statsCheckbox("stats.showStars", t("stats.stars"))}
+          {statsCheckbox("stats.showCommits", t("stats.commits"))}
+          {statsCheckbox("stats.showPRs", t("stats.prs"))}
+          {statsCheckbox("stats.showLanguages", t("stats.languages"))}
+        </div>
+        <p className="text-xs text-muted-foreground">{t("stats.hint")}</p>
+      </div>
     </div>
   );
 }

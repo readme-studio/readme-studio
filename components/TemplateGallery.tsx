@@ -1,10 +1,16 @@
 import { getTranslations } from "next-intl/server";
 import { templates } from "@/lib/templates";
+import type { TemplateMeta } from "@/lib/types";
 import { TemplateCard } from "./TemplateCard";
 
 export async function TemplateGallery() {
   const t = await getTranslations("home");
-  const list = Object.values(templates);
+  const list: TemplateMeta[] = Object.values(templates).map((template) => ({
+    id: template.id,
+    name: template.name,
+    description: template.description,
+    thumbnail: template.thumbnail,
+  }));
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-12">

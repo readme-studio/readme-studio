@@ -67,6 +67,14 @@ export interface Template {
   render(config: ProfileConfig): string;
 }
 
+// 可在服务端序列化传给客户端展示组件的模板元信息（不含 render 函数）
+export interface TemplateMeta {
+  id: string;
+  name: string;
+  description: string;
+  thumbnail: string;
+}
+
 // AI 摘要请求
 export interface SummarizeRequest {
   repos: Array<{
