@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { RepoInfo } from "@/lib/types";
 
 // GitHub 常见语言色板
@@ -46,8 +47,8 @@ export function RepoSelector({
   if (loading) {
     return (
       <div className="space-y-2">
-        <div className="h-14 animate-pulse rounded-lg border bg-muted" />
-        <div className="h-14 animate-pulse rounded-lg border bg-muted" />
+        <Skeleton className="h-14 rounded-lg" />
+        <Skeleton className="h-14 rounded-lg" />
       </div>
     );
   }
