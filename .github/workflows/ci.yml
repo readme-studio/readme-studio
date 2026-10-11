@@ -16,14 +16,18 @@ jobs:
     name: Lint / Typecheck / Test / Build
     runs-on: ubuntu-latest
     # 仅用单一 Node 版本，降低配置复杂度
+    # PUPPETEER_SKIP_DOWNLOAD：本应用的截图脚本使用系统 Chrome（见 scripts/screenshots.ts），
+    # 不需要 puppeteer 自带的 Chromium；跳过其下载可避免 CI 全新环境拉取大文件失败/超时。
+    env:
+      PUPPETEER_SKIP_DOWNLOAD: "true"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10
+        # 不指定 version，自动读取 package.json 的 packageManager 字段（pnpm@10.28.2），
+        # 避免 action-setup 装到不同小版本导致 --frozen-lockfile 报锁文件版本不匹配。
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
