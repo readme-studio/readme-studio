@@ -13,6 +13,9 @@ declare module "next-auth" {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // 生产 / 自定义域名（如 rs.yunlou.net.cn）下显式信任 Host，
+  // 避免 next-auth v5 在无法识别受信 Host 时抛出 Configuration 错误。
+  trustHost: true,
   providers: [
     GitHub({
       clientId: process.env.GITHUB_CLIENT_ID,

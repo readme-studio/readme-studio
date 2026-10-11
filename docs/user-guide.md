@@ -132,6 +132,16 @@ Readme Studio 是一个网页工具，帮你把 GitHub 账号变成一份**好�
 - 确认 OAuth App 的回调地址与部署域名完全一致（含 `https://`、不含结尾斜杠）。
 - 清掉旧会话重试，或换无痕窗口。
 
+**Q：点击登录直接报错 `Configuration`（或页面 500）？**
+这是**部署侧**配置缺失，不是你的问题，需站长处理：
+- 登录 Vercel → 项目 → **Settings → Environment Variables**，确认以下三项都已设置且值正确：
+  1. `GITHUB_CLIENT_ID`（GitHub OAuth App 的 Client ID）
+  2. `GITHUB_CLIENT_SECRET`（Client Secret）
+  3. `AUTH_SECRET`（任意长随机串，用于会话加密）
+- **注意**：这些必须设在 Vercel 项目环境变量里，写在仓库的 `.env.local` 不会被 Vercel 读取。
+- 改完变量后需**重新部署**一次才会生效。
+- 另请确认 GitHub OAuth App 的回调地址为 `https://你的域名/api/auth/callback/github`。
+
 **Q：发布失败，提示一串英文错误码？**
 错误码定义在服务端 `PushResponse.code`，含义如下：
 

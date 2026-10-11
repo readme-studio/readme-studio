@@ -61,6 +61,8 @@ cp .env.example .env.local
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | ⬜ | Enables per-IP daily rate limiting in production |
 | `NEXTAUTH_URL` | ⬜ | Public URL of the deployment (set in production) |
 
+> **必须设在 Vercel 项目环境变量里，不是 `.env.local`**：Vercel 不会读取仓库内的 `.env.local`。`GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` / `AUTH_SECRET` 三者缺一不可，否则登录会报 `error=Configuration`（HTTP 500）。
+
 ### 3. Create a GitHub OAuth App
 
 1. Go to GitHub → Settings → Developer settings → OAuth Apps → **New OAuth App**.
@@ -170,6 +172,8 @@ cp .env.example .env.local
 | `OPENAI_BASE_URL` | ⬜ | 指向任意 OpenAI 兼容服务（如 DeepSeek、SiliconFlow 等） |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | ⬜ | 生产环境按 IP 的每日限额 |
 | `NEXTAUTH_URL` | ⬜ | 部署后的公网地址（生产环境填写） |
+
+> **必须设在 Vercel 项目环境变量里，不是 `.env.local`**：Vercel 不会读取仓库内的 `.env.local`。`GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` / `AUTH_SECRET` 三者缺一不可，否则登录会报 `error=Configuration`（HTTP 500）。
 
 ### 3. 创建 GitHub OAuth App
 
