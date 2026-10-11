@@ -103,21 +103,23 @@ FormLabel.displayName = "FormLabel";
 const FormControl = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
+>(({ className, children, ...props }, ref) => {
   const { error, formItemId, formDescriptionId, formMessageId } = useFormField();
+  // 将 id / aria-* 直接落到真实表单控件上（而非包裹 div），
+  // 使 FormLabel 的 htmlFor 能正确关联控件，满足可访问性（axe「label」规则）。
+  const child = React.Children.only(children) as unknown as React.ReactElement<
+    Record<string, unknown>
+  >;
   return (
-    <div
-      ref={ref}
-      id={formItemId}
-      aria-describedby={
-        !error
-          ? `${formDescriptionId}`
-          : `${formDescriptionId} ${formMessageId}`
-      }
-      aria-invalid={!!error}
-      className={cn(className)}
-      {...props}
-    />
+    <div ref={ref} className={cn(className)} {...props}>
+      {React.cloneElement(child, {
+        id: formItemId,
+        "aria-describedby": !error
+          ? formDescriptionId
+          : `${formDescriptionId} ${formMessageId}`,
+        "aria-invalid": Boolean(error),
+      })}
+    </div>
   );
 });
 FormControl.displayName = "FormControl";

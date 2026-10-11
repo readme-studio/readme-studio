@@ -23,6 +23,8 @@
   },
   "editor": {
     "title": "填写信息",
+    "tabForm": "编辑",
+    "tabPreview": "预览",
     "form": {
       "name": "姓名",
       "tagline": "标签",

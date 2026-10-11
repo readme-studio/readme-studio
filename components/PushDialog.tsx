@@ -21,9 +21,11 @@ type ErrCode = "AUTH" | "SCOPE" | "RATE" | "NETWORK" | "OTHER" | undefined;
 export function PushDialog({
   markdown,
   onPushed,
+  className,
 }: {
   markdown: string;
   onPushed: (url: string) => void;
+  className?: string;
 }) {
   const t = useTranslations("result");
   const tp = useTranslations("result.publish");
@@ -123,9 +125,9 @@ export function PushDialog({
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="outline">{t("push")}</Button>
+        <Button variant="outline" className={className}>{t("push")}</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="fixed! inset-0! h-[100dvh]! w-full! max-w-none! translate-x-0! translate-y-0! rounded-none! overflow-y-auto p-4 sm:inset-auto! sm:top-1/2! sm:left-1/2! sm:h-auto! sm:w-full! sm:max-w-md! sm:-translate-x-1/2! sm:-translate-y-1/2! sm:rounded-lg! sm:p-6">
         <DialogHeader>
           <DialogTitle>{tp("title")}</DialogTitle>
           <DialogDescription>

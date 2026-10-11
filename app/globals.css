@@ -170,4 +170,20 @@ body {
   .md-preview strong {
     @apply font-semibold;
   }
+  .md-preview pre {
+    @apply my-3 overflow-x-auto rounded-lg bg-muted p-3 text-xs leading-relaxed;
+  }
+  .md-preview pre code {
+    @apply bg-transparent p-0 text-xs;
+  }
+  .md-preview img {
+    @apply my-2 max-w-full rounded-lg;
+  }
+  .md-preview table {
+    @apply my-2 w-full border-collapse text-left;
+  }
+  .md-preview th,
+  .md-preview td {
+    @apply border border-border px-2 py-1;
+  }
 }

@@ -8,7 +8,7 @@
  * 手动执行：pnpm gen:thumbs
  * 不进入构建流程；缩略图尽量小（浅色主题）。
  */
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { remark } from "remark";

@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# 同一分支并发只保留最新一次，节省额度
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Lint / Typecheck / Test / Build
+    runs-on: ubuntu-latest
+    # 仅用单一 Node 版本，降低配置复杂度
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      # 任意步骤失败时打印完整日志（默认已带，这里显式标注以便排障）
+      - name: Show failure hint
+        if: failure()
+        run: echo "::error::CI 失败，请查看上方各步骤的完整输出（已默认开启全量日志）。本地可先运行 pnpm lint && pnpm typecheck && pnpm test && pnpm build 复现。"

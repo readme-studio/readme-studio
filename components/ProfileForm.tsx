@@ -67,6 +67,7 @@ export function ProfileForm() {
         <FormItem className="flex flex-row items-center gap-2 space-y-0">
           <FormControl>
             <Checkbox
+              aria-label={label}
               checked={Boolean(field.value)}
               onCheckedChange={(c) => field.onChange(c === true)}
             />

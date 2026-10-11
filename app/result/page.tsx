@@ -73,11 +73,11 @@ export default function ResultPage() {
           <MarkdownPreview markdown={markdown} />
         </div>
 
-        <div className="flex flex-wrap gap-3">
-          <Button onClick={handleCopy}>{t("copy")}</Button>
-          <PushDialog markdown={markdown} onPushed={setPushedUrl} />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <Button onClick={handleCopy} className="w-full sm:w-auto">{t("copy")}</Button>
+          <PushDialog markdown={markdown} onPushed={setPushedUrl} className="w-full sm:w-auto" />
           {pushedUrl && (
-            <Button asChild variant="secondary">
+            <Button asChild variant="secondary" className="w-full sm:w-auto">
               <a href={pushedUrl} target="_blank" rel="noreferrer">
                 {t("view")}
               </a>

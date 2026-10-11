@@ -25,7 +25,7 @@ export function PreviewThemeSelect({
     <div className="flex items-center gap-2">
       <span className="text-sm text-muted-foreground">{t("label")}</span>
       <Select value={value} onValueChange={(v) => onChange(v as PreviewTheme)}>
-        <SelectTrigger className="h-8 w-24">
+        <SelectTrigger className="h-8 w-24" aria-label={t("label")}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

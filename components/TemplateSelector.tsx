@@ -25,7 +25,7 @@ export function TemplateSelector({
     <div className="flex items-center gap-2">
       <span className="text-sm text-muted-foreground">{t("template")}</span>
       <Select value={value} onValueChange={(v) => onChange(v as TemplateId)}>
-        <SelectTrigger className="h-8 w-32">
+        <SelectTrigger className="h-8 w-32" aria-label={t("template")}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

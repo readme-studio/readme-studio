@@ -84,6 +84,8 @@ export function EditorBody({ loggedIn }: { loggedIn: boolean }) {
   const [byok, setByok] = useState<{ provider: ByokProvider; key: string } | null>(null);
   const [byokOpen, setByokOpen] = useState(false);
   const [reposError, setReposError] = useState<null | "network" | "unauthorized">(null);
+  // 移动端表单/预览 Tab 切换状态（桌面端并排显示，无需切换）
+  const [mobileTab, setMobileTab] = useState<"form" | "preview">("form");
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -394,8 +396,30 @@ export function EditorBody({ loggedIn }: { loggedIn: boolean }) {
         </div>
       )}
 
+      {/* 移动端：表单 / 预览 Tab 切换；桌面端（lg+）并排显示，隐藏此栏 */}
+      <div className="flex gap-2 border-b p-2 lg:hidden">
+        <Button
+          type="button"
+          variant={mobileTab === "form" ? "default" : "outline"}
+          size="sm"
+          className="flex-1"
+          onClick={() => setMobileTab("form")}
+        >
+          {t("tabForm")}
+        </Button>
+        <Button
+          type="button"
+          variant={mobileTab === "preview" ? "default" : "outline"}
+          size="sm"
+          className="flex-1"
+          onClick={() => setMobileTab("preview")}
+        >
+          {t("tabPreview")}
+        </Button>
+      </div>
+
       <div className="grid flex-1 grid-cols-1 lg:grid-cols-2">
-        <aside className="space-y-6 border-b p-4 lg:border-b-0 lg:border-r">
+        <aside className={cn("space-y-6 border-b p-4 lg:border-b-0 lg:border-r", mobileTab === "form" ? "block" : "hidden", "lg:block")}>
           <ProfileForm />
 
           <div>
@@ -435,7 +459,7 @@ export function EditorBody({ loggedIn }: { loggedIn: boolean }) {
           </Button>
         </aside>
 
-        <section className="flex flex-col p-4">
+        <section className={cn("flex flex-col p-4", mobileTab === "preview" ? "block" : "hidden", "lg:block")}>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <TemplateSelector
               value={displayConfig.templateId}
