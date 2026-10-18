@@ -21,7 +21,7 @@ import { minimalTemplate, getTemplate, templates, type TemplateId } from "@/lib/
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { saveConfig } from "@/lib/storage";
 import { profileFormSchema, type ProfileFormValues } from "@/lib/schemas";
-import { summarizeWithBYOK, type ByokProvider } from "@/lib/byok";
+import { summarizeWithBYOK, setByokKey, type ByokProvider, type CompatibleOptions } from "@/lib/byok";
 import type { RepoInfo, ProfileConfig, FeaturedRepo } from "@/lib/types";
 
 const DEFAULT_CONFIG: ProfileConfig = {
@@ -81,7 +81,12 @@ export function EditorBody({ loggedIn }: { loggedIn: boolean }) {
   const [summarizingNames, setSummarizingNames] = useState<string[]>([]);
   const [quota, setQuota] = useState<number | null>(null);
   const [formValues, setFormValues] = useState<ProfileFormValues>(DEFAULT_FORM);
-  const [byok, setByok] = useState<{ provider: ByokProvider; key: string } | null>(null);
+  const [byok, setByok] = useState<{
+    provider: ByokProvider;
+    key: string;
+    baseURL?: string;
+    model?: string;
+  } | null>(null);
   const [byokOpen, setByokOpen] = useState(false);
   const [reposError, setReposError] = useState<null | "network" | "unauthorized">(null);
   // 移动端表单/预览 Tab 切换状态（桌面端并排显示，无需切换）
@@ -234,6 +239,7 @@ export function EditorBody({ loggedIn }: { loggedIn: boolean }) {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      let source: string | null = null;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -250,7 +256,12 @@ export function EditorBody({ loggedIn }: { loggedIn: boolean }) {
               repo?: string;
               delta?: string;
               error?: string;
+              meta?: string;
             };
+            if (json.meta) {
+              source = json.meta;
+              continue;
+            }
             if (json.error) {
               toast.error(json.repo ? `${json.repo}：${json.error}` : json.error);
               if (json.repo) {
@@ -280,6 +291,14 @@ export function EditorBody({ loggedIn }: { loggedIn: boolean }) {
           }
         }
       }
+
+      // 本地启发式兜底（无 LLM 凭证）时，提示用户可接入自己的 Key 升级真·AI
+      if (source === "local") {
+        toast(t("ai.localDone"), {
+          description: t("ai.localDoneDesc"),
+          action: { label: t("ai.upgrade"), onClick: () => setByokOpen(true) },
+        });
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "AI 总结失败";
       toast.error(msg);
@@ -297,8 +316,12 @@ export function EditorBody({ loggedIn }: { loggedIn: boolean }) {
     }
   };
 
-  // BYOK 直连：浏览器直接调用 OpenAI/Gemini，或经代理调用 Anthropic；不计入服务端额度
-  const runByokSummarize = async (provider: ByokProvider, apiKey: string) => {
+  // BYOK 直连：浏览器直接调用 OpenAI/Gemini/兼容源，或经代理调用 Anthropic；不计入服务端额度
+  const runByokSummarize = async (
+    provider: ByokProvider,
+    apiKey: string,
+    opts?: CompatibleOptions,
+  ) => {
     const toSummarize = featured.slice(0, MAX_SUMMARY);
     beginSummarize(toSummarize);
     try {
@@ -309,6 +332,7 @@ export function EditorBody({ loggedIn }: { loggedIn: boolean }) {
               { name: f.name, description: f.description, language: f.language },
               provider,
               apiKey,
+              opts,
             );
             return { name: f.name, text };
           } catch (e) {
@@ -344,10 +368,28 @@ export function EditorBody({ loggedIn }: { loggedIn: boolean }) {
     }
   };
 
+  // 进入编辑器时还原兼容源（compatible）BYOK 配置（Key 已存 localStorage，这里补齐 base/model）
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const cKey = localStorage.getItem("byok:compatible");
+    if (cKey) {
+      setByok({
+        provider: "compatible",
+        key: cKey,
+        baseURL: localStorage.getItem("byok:compatible:base") ?? "",
+        model: localStorage.getItem("byok:compatible:model") ?? "",
+      });
+    }
+  }, []);
+
   const handleSummarize = () => {
     if (featured.length === 0 || summarizing) return;
     if (byok) {
-      void runByokSummarize(byok.provider, byok.key);
+      const opts: CompatibleOptions | undefined =
+        byok.provider === "compatible"
+          ? { baseURL: byok.baseURL ?? "", model: byok.model ?? "" }
+          : undefined;
+      void runByokSummarize(byok.provider, byok.key, opts);
     } else {
       void runServerSummarize();
     }
@@ -482,11 +524,16 @@ export function EditorBody({ loggedIn }: { loggedIn: boolean }) {
       <ByokDialog
         open={byokOpen}
         onOpenChange={setByokOpen}
-        onSaved={(provider, key) => {
-          setByok({ provider, key });
+        onSaved={(provider, key, opts) => {
+          setByok({ provider, key, baseURL: opts?.baseURL, model: opts?.model });
+          if (provider === "compatible") {
+            setByokKey("compatible", key);
+            localStorage.setItem("byok:compatible:base", opts?.baseURL ?? "");
+            localStorage.setItem("byok:compatible:model", opts?.model ?? "");
+          }
           setByokOpen(false);
           toast.success(t("byok.saved"));
-          void runByokSummarize(provider, key);
+          void runByokSummarize(provider, key, opts);
         }}
       />
     </Form>

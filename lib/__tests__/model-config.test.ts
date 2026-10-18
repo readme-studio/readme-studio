@@ -30,31 +30,28 @@ describe("resolveModelConfig（免费模型优先级）", () => {
     expect(cfg.model).toBe("deepseek-chat");
   });
 
-  it("无 key 且未禁用 Ollama 时，自动回退到本地 Ollama（零费用）", () => {
+  it("无 key 时，source 为 none（路由改走本地启发式生成器，零费用、离线可用）", () => {
     const cfg = resolveModelConfig(env({}));
-    expect(cfg.source).toBe("ollama");
-    expect(cfg.apiKey).toBe("ollama");
-    expect(cfg.model).toBe("qwen2.5:latest");
-    expect(cfg.baseURL).toBe("http://localhost:11434/v1");
+    expect(cfg.source).toBe("none");
+    expect(cfg.apiKey).toBe("");
+    expect(cfg.baseURL).toBe("");
   });
 
-  it("可自定义 Ollama 模型与地址", () => {
+  it("Ollama 经 OPENAI_BASE_URL 接入时仍走 openai 分支（本地 Ollama 的 /v1 端点）", () => {
     const cfg = resolveModelConfig(
-      env({ OLLAMA_BASE_URL: "http://127.0.0.1:11434/v1/", OLLAMA_MODEL: "llama3.1" }),
+      env({
+        OPENAI_API_KEY: "ollama",
+        OPENAI_BASE_URL: "http://127.0.0.1:11434/v1/",
+        OPENAI_MODEL: "llama3.1",
+      }),
     );
-    expect(cfg.source).toBe("ollama");
+    expect(cfg.source).toBe("openai");
     expect(cfg.baseURL).toBe("http://127.0.0.1:11434/v1");
     expect(cfg.model).toBe("llama3.1");
   });
 
-  it("ENABLE_OLLAMA=false 且无 key 时，source 为 none（由调用方引导）", () => {
-    const cfg = resolveModelConfig(env({ ENABLE_OLLAMA: "false" }));
-    expect(cfg.source).toBe("none");
-    expect(cfg.apiKey).toBe("");
-  });
-
-  it("空字符串 key 视为未配置，回退 Ollama", () => {
+  it("空字符串 key 视为未配置，source 为 none", () => {
     const cfg = resolveModelConfig(env({ OPENAI_API_KEY: "   " }));
-    expect(cfg.source).toBe("ollama");
+    expect(cfg.source).toBe("none");
   });
 });

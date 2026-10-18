@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { checkDailySummaryLimit } from "@/lib/rate-limit";
+import { resolveModelConfig } from "@/lib/model-config";
 import {
   streamSummaries,
   summariesToSse,
+  withMeta,
   createSseResponse,
 } from "@/lib/summarize";
+import { streamSummariesLocal } from "@/lib/local-summary";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,8 +57,16 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 限流 key 优先用登录用户 id（文档要求 summarize:{userId}:{date}），
-  // 未登录时回退到 IP，避免 NAT 共享/换 IP 绕过的问题在登录态下发生。
+  const cfg = resolveModelConfig();
+  const useLocal = cfg.source !== "openai";
+
+  // 本地启发式兜底：免费、离线、无限额，保证按钮永远可用
+  if (useLocal) {
+    const stream = summariesToSse(withMeta(streamSummariesLocal(parsed.data.repos), "local"));
+    return createSseResponse(stream);
+  }
+
+  // 以下为真·LLM 路径：用每日额度做基础防护（真 LLM 有成本）
   const session = await auth();
   const date = dayKey();
   const idKey = session?.user?.id;
@@ -71,15 +82,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: "服务未配置 OPENAI_API_KEY", code: "CONFIG_MISSING" },
-      { status: 500 },
-    );
-  }
-
-  const stream = summariesToSse(streamSummaries(parsed.data.repos, apiKey));
+  const stream = summariesToSse(withMeta(streamSummaries(parsed.data.repos, cfg), "openai"));
 
   return createSseResponse(stream, {
     headers: { "X-RateLimit-Remaining": String(limit.remaining) },

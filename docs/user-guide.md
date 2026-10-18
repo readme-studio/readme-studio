@@ -12,7 +12,7 @@ Readme Studio 是一个网页工具，帮你把 GitHub 账号变成一份**好�
 你不需要会写 Markdown、不需要命令行、不需要折腾 Token：
 
 - **23 套模板**：极简、终端、数据面板、霓虹、玻璃拟态…… 输入即预览。
-- **AI 项目总结**：每个精选仓库自动生成一句干净的中文简介（可自带 Key，也可零费用本地跑）。
+- **AI 项目总结**：每个精选仓库自动生成一句干净的中文简介（无服务端 Key 时自动用内置离线生成器，也可自带 Key 升级真·AI）。
 - **一键发布**：用 GitHub 登录后，直接把 README 推到你的主页仓库。
 
 ---
@@ -65,11 +65,11 @@ Readme Studio 是一个网页工具，帮你把 GitHub 账号变成一份**好�
 2. 点击 **「生成总结」**，每个仓库会收到一句克制、专业的中文简介。
 3. 不满意可重新生成，或手动修改文本框。
 
-**不想用云端 AI？三种方式任选（详见第四节）：**
+**不想用云端 AI？几种方式任选（详见第四节）：**
 
-- 站点已配置 OpenAI → 直接用（你无需任何操作）。
-- 自带 Key（BYOK）→ 在设置里填入你自己的 OpenAI / Gemini / Claude Key，浏览器直连，Key 不经过本服务器。
-- 本地 Ollama → 零费用，完全离线。
+- 内置离线生成器（默认）→ 无服务端 Key 时自动启用，零依赖、完全免费、永远可用。
+- 站点已配置 OpenAI（或 `OPENAI_BASE_URL` 指向免费兼容源）→ 直接用，你无需任何操作。
+- 自带 Key（BYOK）→ 在设置里填入你自己的 OpenAI / Gemini / Claude Key，或任意 OpenAI 兼容源（DeepSeek、硅基流动等免费额度），浏览器直连，Key 不经过本服务器。
 
 ### 步骤 5 — 预览
 
@@ -107,21 +107,43 @@ Readme Studio 是一个网页工具，帮你把 GitHub 账号变成一份**好�
 
 ---
 
-## 四、AI 总结的三种方式（详解）
+## 四、AI 总结的几种方式（详解）
 
 | 方式 | 谁来付 API 费用 | 数据去向 | 是否需要配置 | 适合谁 |
 | --- | --- | --- | --- | --- |
-| ① 站点服务端 OpenAI | 站长（已配 `OPENAI_API_KEY`） | 经本站服务器调用 `gpt-4o-mini` | 你无需操作 | 大多数用户 |
-| ② BYOK 自带 Key | 你自己 | OpenAI/Gemini **浏览器直连**；Claude 走最小代理，**Key 均不存储** | 在设置填入你的 Key | 在意隐私 / 想用自己额度 |
-| ③ 本地 Ollama | 免费（本地算力） | 完全离线，不出本机 | 本地需装 Ollama 并起服务 | 零成本体验 |
+| ① 内置离线生成器（默认） | 免费 | 不出本机，仅用仓库公开信息本地合成 | 自动生效（无服务端 Key 时） | 所有人；零成本开箱即用 |
+| ② 站点服务端 OpenAI | 站长（已配 `OPENAI_API_KEY`，可经 `OPENAI_BASE_URL` 指向 DeepSeek/硅基流动等免费兼容源） | 经本站服务器调用模型 | 你无需操作 | 大多数用户 |
+| ③ BYOK 自带 Key | 你自己 | OpenAI/Gemini/Claude/**任意 OpenAI 兼容源** 浏览器直连；Key 均不存储 | 在设置填入你的 Key | 在意隐私 / 想用自己额度 |
+| ④ 本地 Ollama（进阶） | 免费（本地算力） | 完全离线 | 本地装 Ollama 并把 `OPENAI_BASE_URL` 指向其 `/v1` 端点 | 想完全自托管 |
 
 **BYOK 填写指引：**
 
 - OpenAI：填 `sk-...` 开头的关键字。
 - Gemini：填 Google AI Studio 申请的 API Key。
 - Claude（Anthropic）：因浏览器 CORS 限制，由本站一个最小代理转发，Key 只在请求中使用、不落库。
+- OpenAI 兼容源（DeepSeek / 硅基流动 / 通义千问等）：选「OpenAI 兼容」并填写 Base URL（如 `https://api.deepseek.com/v1`）与模型名（如 `deepseek-chat`）。多数厂商提供免费额度，Key 不落服务器。
 
-> 三者的提示词一致，摘要风格统一，不会出现「服务器版本和自带 Key 版本说法不一」的情况。
+> 提示词一致，摘要风格统一；离线生成器走的是规则合成，质量略逊于真·LLM，但永远可用、永不联网失败。
+
+### 免费 Key 去哪领（真·AI 零成本）
+
+想升级真·AI 但不想花钱？以下渠道均有免费额度（政策可能随时间调整，以官网为准）：
+
+| 渠道 | 免费额度 | Base URL | 推荐模型 | 备注 |
+| --- | --- | --- | --- | --- |
+| **硅基流动** | 手机号注册送约 2000 万 Tokens；9B 以下模型永久免费 | `https://api.siliconflow.cn/v1` | `deepseek-ai/DeepSeek-V3`、`Qwen/Qwen2.5-7B-Instruct` | 国内直连，最推荐 |
+| **DeepSeek 官方** | 新用户赠送约 10 元 / 百万级 Tokens | `https://api.deepseek.com/v1` | `deepseek-chat` | 中文质量好，超出后约每百万输入 1 元 |
+| **Google AI Studio** | 免费层不绑卡、不过期；Flash-Lite 约 1000 次/日、Flash 约 250 次/日 | `https://generativelanguage.googleapis.com/v1beta/openai/` | `gemini-2.5-flash-lite` | 需能访问 Google，高峰期限速 |
+| **智谱 GLM** | `glm-4.5-flash` 标注免费 | `https://open.bigmodel.cn/api/paas/v4` | `glm-4.5-flash` | 国内直连 |
+
+**领取步骤（以硅基流动为例，其他平台同理）：**
+
+1. 打开官网（`cloud.siliconflow.cn`），手机号 / 邮箱注册。
+2. 进入控制台 → 左侧「API 密钥」→ 新建 API 密钥。
+3. 复制 `sk-` 开头的密钥（只显示一次，妥善保存）。
+4. 在本站 BYOK 弹窗选「**OpenAI 兼容**」，粘贴密钥 + 上表对应的 **Base URL** + **模型名**，保存即可。
+
+> 安全提示：Key 只存在你的浏览器 localStorage，不经过/不存储在站点服务器；但仍建议不要把 Key 发给他人或提交到代码仓库。
 
 ---
 
@@ -177,7 +199,7 @@ Readme Studio 是一个网页工具，帮你把 GitHub 账号变成一份**好�
    | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | ✅ | GitHub OAuth App 凭据 |
    | `AUTH_SECRET` | ✅ | Auth.js 会话加密密钥（长随机串） |
    | `NEXTAUTH_URL` | ✅（生产） | 你的公网域名，结尾不带斜杠 |
-   | `OPENAI_API_KEY` | ⬜ | 启用服务端 AI 总结；留空则回退 Ollama |
+   | `OPENAI_API_KEY` | ⬜ | 启用服务端 AI 总结；留空则自动使用内置离线生成器 |
    | `UPSTASH_REDIS_REST_URL` / `TOKEN` | ⬜ | 生产环境按 IP 每日限额 |
 
 3. **GitHub OAuth App 回调**已设为 `https://你的域名/api/auth/callback/github`。

@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import type { ByokProvider } from "@/lib/byok";
+import type { ByokProvider, CompatibleOptions } from "@/lib/byok";
 
 export function ByokDialog({
   open,
@@ -28,22 +28,30 @@ export function ByokDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSaved: (provider: ByokProvider, key: string) => void;
+  onSaved: (provider: ByokProvider, key: string, opts?: CompatibleOptions) => void;
 }) {
   const t = useTranslations("editor.byok");
   const [provider, setProvider] = useState<ByokProvider>("openai");
   const [key, setKey] = useState("");
+  const [baseURL, setBaseURL] = useState("");
+  const [model, setModel] = useState("");
 
   const save = () => {
     const trimmed = key.trim();
     if (!trimmed) return;
-    onSaved(provider, trimmed);
+    const opts: CompatibleOptions | undefined =
+      provider === "compatible"
+        ? { baseURL: baseURL.trim(), model: model.trim() }
+        : undefined;
+    onSaved(provider, trimmed, opts);
     setKey("");
+    setBaseURL("");
+    setModel("");
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{t("desc")}</DialogDescription>
@@ -63,9 +71,34 @@ export function ByokDialog({
                 <SelectItem value="openai">{t("openai")}</SelectItem>
                 <SelectItem value="anthropic">{t("anthropic")}</SelectItem>
                 <SelectItem value="gemini">{t("gemini")}</SelectItem>
+                <SelectItem value="compatible">{t("compatible")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {provider === "compatible" && (
+            <>
+              <div>
+                <label className="mb-1 block text-sm font-medium">{t("baseUrl")}</label>
+                <Input
+                  type="url"
+                  value={baseURL}
+                  onChange={(e) => setBaseURL(e.target.value)}
+                  placeholder={t("baseUrlPlaceholder")}
+                  autoComplete="off"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">{t("model")}</label>
+                <Input
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  placeholder={t("modelPlaceholder")}
+                  autoComplete="off"
+                />
+              </div>
+            </>
+          )}
 
           <div>
             <label className="mb-1 block text-sm font-medium">{t("keyLabel")}</label>
@@ -81,6 +114,9 @@ export function ByokDialog({
           <p className="text-xs text-muted-foreground">{t("note")}</p>
           {provider === "anthropic" && (
             <p className="text-xs text-muted-foreground">{t("noteClaude")}</p>
+          )}
+          {provider === "compatible" && (
+            <p className="text-xs text-muted-foreground">{t("noteCompatible")}</p>
           )}
         </div>
 

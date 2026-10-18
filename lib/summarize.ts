@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import type { ModelConfig } from "./model-config";
 import type { SummarizeRequest } from "./types";
 
 export const SUMMARY_MODEL = "gpt-4o-mini";
@@ -25,23 +26,24 @@ export function buildOneRepoPrompt(repo: RepoInput): string {
   return `请为以下项目写一句中文总结：\n1. ${repo.name} — ${desc}；主要语言：${repo.language || "未知"}${topics}`;
 }
 
-// SSE 事件：逐仓库回流。delta 为增量片段；error 为该仓库的失败信息
+// SSE 事件：逐仓库回流。delta 为增量片段；error 为该仓库的失败信息；meta 标明来源（local/openai）
 export interface RepoSummaryEvent {
   repo: string;
   delta?: string;
   error?: string;
+  meta?: string;
 }
 
 // 单个仓库的 LLM 流：逐 token 产出 {repo, delta}；失败产出 {repo, error}
 export async function* summarizeOne(
   repo: RepoInput,
-  apiKey: string,
+  cfg: ModelConfig,
 ): AsyncGenerator<RepoSummaryEvent> {
-  const openai = new OpenAI({ apiKey });
+  const openai = new OpenAI({ apiKey: cfg.apiKey, baseURL: cfg.baseURL });
   try {
     const completion = await openai.chat.completions.create(
       {
-        model: SUMMARY_MODEL,
+        model: cfg.model || SUMMARY_MODEL,
         stream: true,
         temperature: 0.3,
         messages: [
@@ -91,10 +93,19 @@ async function* mergeGenerators(
 // 并发总结多个仓库，产出逐仓库事件流
 export function streamSummaries(
   repos: RepoInput[],
-  apiKey: string,
+  cfg: ModelConfig,
 ): AsyncGenerator<RepoSummaryEvent> {
-  const generators = repos.map((r) => summarizeOne(r, apiKey));
+  const generators = repos.map((r) => summarizeOne(r, cfg));
   return mergeGenerators(generators);
+}
+
+// 在事件源前注入一个 meta 事件，用于告知前端本次来源（local / openai）
+export async function* withMeta(
+  source: AsyncIterable<RepoSummaryEvent>,
+  meta: string,
+): AsyncGenerator<RepoSummaryEvent> {
+  yield { repo: "", meta };
+  yield* source as AsyncGenerator<RepoSummaryEvent>;
 }
 
 // ---- SSE 帧封装（纯函数，便于单测） ----

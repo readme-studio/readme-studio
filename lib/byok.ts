@@ -4,7 +4,13 @@
 // - Anthropic：受 CORS 限制，走 /api/byok/proxy 服务端代理转发（见 app/api/byok/proxy）。
 // 提示词与服务端 lib/summarize.ts 的 SYSTEM_PROMPT / buildOneRepoPrompt 保持一致（防幻觉规则）。
 
-export type ByokProvider = "openai" | "anthropic" | "gemini";
+export type ByokProvider = "openai" | "anthropic" | "gemini" | "compatible";
+
+// 兼容源的可选参数（Base URL 与模型名）
+export interface CompatibleOptions {
+  baseURL: string;
+  model: string;
+}
 
 const STORAGE_PREFIX = "byok:";
 
@@ -40,14 +46,52 @@ export function clearByokKey(provider: ByokProvider): void {
   localStorage.removeItem(STORAGE_PREFIX + provider);
 }
 
+// OpenAI 兼容源（DeepSeek / 硅基流动 / 通义 / 本地 Ollama 的 /v1 等）：浏览器直连，Key 不落服务器
+async function summarizeCompatible(
+  repo: RepoForSummary,
+  apiKey: string,
+  opts: CompatibleOptions,
+): Promise<string> {
+  const base = opts.baseURL.trim().replace(/\/+$/, "");
+  if (!base) throw new Error("请填写 Base URL");
+  const res = await fetch(`${base}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: opts.model.trim() || "deepseek-chat",
+      temperature: 0.3,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: buildPrompt(repo) },
+      ],
+    }),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(
+      `兼容源调用失败（${res.status}）${detail ? "：" + detail.slice(0, 120) : ""}`,
+    );
+  }
+  const json = (await res.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
+  return json.choices?.[0]?.message?.content?.trim() ?? "";
+}
+
 // 统一入口：根据 provider 选择直连或代理
 export async function summarizeWithBYOK(
   repo: RepoForSummary,
   provider: ByokProvider,
   apiKey: string,
+  opts?: CompatibleOptions,
 ): Promise<string> {
   if (provider === "openai") return summarizeOpenAI(repo, apiKey);
   if (provider === "gemini") return summarizeGemini(repo, apiKey);
+  if (provider === "compatible")
+    return summarizeCompatible(repo, apiKey, opts ?? { baseURL: "", model: "" });
   return summarizeAnthropicProxy(repo, apiKey);
 }
 

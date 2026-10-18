@@ -73,7 +73,10 @@
     "ai": {
       "summarize": "AI 总结选中项目",
       "summarizing": "总结中…",
-      "quota": "剩余额度"
+      "quota": "剩余额度",
+      "localDone": "已用本地模板生成简介",
+      "localDoneDesc": "零依赖、离线生成。想要更聪明的真·AI 总结？可填入你自己的免费 Key。",
+      "upgrade": "接入我的 Key"
     },
     "previewHint": "整站主题可手动切换或跟随系统；GitHub 个人主页会随访问者的主题渲染",
     "login": "登录 GitHub",
@@ -93,17 +96,23 @@
     "retry": "重试",
     "reposLoadFailed": "仓库加载失败，请检查网络后重试",
     "byok": {
-      "title": "额度已用完，使用自己的 Key",
-      "desc": "超出每日免费额度后，可用自己的 API Key 继续生成。",
+      "title": "使用你自己的 Key（可选）",
+      "desc": "未配置服务端模型时，总结由本地模板生成；填入你自己的 Key 可升级为真·AI。也支持任意 OpenAI 兼容免费源（如 DeepSeek、硅基流动）。",
       "provider": "服务商",
       "openai": "OpenAI",
       "anthropic": "Anthropic（Claude）",
       "gemini": "Gemini",
+      "compatible": "OpenAI 兼容（DeepSeek 等）",
+      "baseUrl": "Base URL",
+      "baseUrlPlaceholder": "https://api.deepseek.com/v1",
+      "model": "模型名",
+      "modelPlaceholder": "deepseek-chat",
       "keyLabel": "API Key",
       "save": "保存并使用",
       "cancel": "取消",
       "note": "Key 只保存在你的浏览器 localStorage，不会上传到我们的服务器，也不计入每日额度。",
       "noteClaude": "Claude 受 CORS 限制，需经服务端代理转发（仅转发，不存储 Key）。",
+      "noteCompatible": "可填入任意 OpenAI 兼容服务（如 DeepSeek、硅基流动、通义千问），多数提供免费额度，Key 不落服务器。",
       "saved": "已保存，正在用你的 Key 生成"
     }
   },
